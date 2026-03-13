@@ -1,0 +1,41 @@
+# seed.yaml — Automation Contract for meta-organvm/organvm-ontologia
+# Schema: seed/v1.0
+
+schema_version: "1.0"
+organ: Meta
+organ_name: Meta
+repo: organvm-ontologia
+org: meta-organvm
+
+metadata:
+  implementation_status: ACTIVE
+  tier: standard
+  promotion_status: LOCAL
+  last_validated: "2026-03-13"
+  generated: "2026-03-13"
+  sprint: "ONTOLOGIA"
+  language: python
+
+agents:
+  - name: ci
+    trigger: on_push
+    workflow: .github/workflows/ci.yml
+    description: "Run tests and type checks"
+
+produces:
+  - type: entity-registry
+    description: "UID-based entity identity and temporal naming for all system objects"
+    consumers: [META-ORGANVM]
+  - type: event-log
+    description: "Append-only event bus with entity-scoped mutation tracking"
+    consumers: [META-ORGANVM]
+
+consumes:
+  - type: registry
+    source: META-ORGANVM
+    description: "Reads registry-v2.json for bootstrap migration"
+
+subscriptions:
+  - event: registry.updated
+    source: META-ORGANVM
+    action: Re-bootstrap any new entities from registry

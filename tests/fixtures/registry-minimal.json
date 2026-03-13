@@ -1,0 +1,54 @@
+{
+  "version": "2.0",
+  "schema_version": "2.0",
+  "organs": {
+    "ORGAN-I": {
+      "name": "Theoria",
+      "description": "Foundational theory",
+      "repositories": [
+        {
+          "name": "recursive-engine--generative-entity",
+          "org": "ivviiviivvi",
+          "status": "ACTIVE",
+          "public": true,
+          "tier": "flagship",
+          "promotion_status": "CANDIDATE",
+          "implementation_status": "ACTIVE"
+        },
+        {
+          "name": "my-knowledge-base",
+          "org": "ivviiviivvi",
+          "status": "ACTIVE",
+          "public": false,
+          "tier": "standard",
+          "promotion_status": "CANDIDATE",
+          "implementation_status": "ACTIVE"
+        }
+      ]
+    },
+    "META-ORGANVM": {
+      "name": "Meta",
+      "description": "Cross-organ governance",
+      "repositories": [
+        {
+          "name": "organvm-engine",
+          "org": "meta-organvm",
+          "status": "ACTIVE",
+          "public": true,
+          "tier": "flagship",
+          "promotion_status": "PUBLIC_PROCESS",
+          "implementation_status": "ACTIVE"
+        },
+        {
+          "name": "organvm-ontologia",
+          "org": "meta-organvm",
+          "status": "ACTIVE",
+          "public": true,
+          "tier": "standard",
+          "promotion_status": "LOCAL",
+          "implementation_status": "ACTIVE"
+        }
+      ]
+    }
+  }
+}

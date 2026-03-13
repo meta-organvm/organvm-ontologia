@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://organvm.dev/schemas/entity-identity.schema.json",
+  "title": "Entity Identity",
+  "description": "Immutable identity record for a system entity in the ontologia registry",
+  "type": "object",
+  "required": ["uid", "entity_type"],
+  "properties": {
+    "uid": {
+      "type": "string",
+      "pattern": "^ent_[a-z]+_[0-9A-HJKMNP-TV-Z]{26}$",
+      "description": "Permanent entity identifier: ent_{type_prefix}_{ulid}"
+    },
+    "entity_type": {
+      "type": "string",
+      "enum": ["organ", "repo", "module", "document", "session", "variable", "metric"],
+      "description": "The kind of entity this identity represents"
+    },
+    "lifecycle_status": {
+      "type": "string",
+      "enum": ["active", "deprecated", "merged", "split", "archived"],
+      "default": "active",
+      "description": "Current lifecycle state of the entity"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of entity creation"
+    },
+    "created_by": {
+      "type": "string",
+      "default": "system",
+      "description": "Identifier of the creator (user, agent, or system component)"
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Extensible metadata attached to the entity"
+    }
+  },
+  "additionalProperties": false
+}
