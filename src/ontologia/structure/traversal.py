@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections import deque
 
-from ontologia.structure.edges import EdgeIndex, HierarchyEdge, RelationEdge
+from ontologia.structure.edges import EdgeIndex
 
 
 def macro_descent(

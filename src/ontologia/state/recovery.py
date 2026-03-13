@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from ontologia.entity.identity import EntityIdentity, EntityType, LifecycleStatus
-from ontologia.entity.naming import NameIndex, NameRecord, add_name
+from ontologia.entity.naming import NameIndex, add_name
 from ontologia.events.bus import (
     ENTITY_ARCHIVED,
     ENTITY_CREATED,

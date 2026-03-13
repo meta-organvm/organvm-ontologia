@@ -7,7 +7,7 @@ hierarchical defaults with override capability.
 
 from __future__ import annotations
 
-from ontologia.variables.variable import Scope, Variable, SCOPE_ORDER
+from ontologia.variables.variable import SCOPE_ORDER, Scope, Variable
 
 
 def scope_chain(scope: Scope) -> list[Scope]:
@@ -54,9 +54,8 @@ def find_in_chain(
             if var.scope != check_scope:
                 continue
             # If entity_id specified, must match; if None, accept any
-            if entity_id is not None and var.entity_id is not None:
-                if var.entity_id != entity_id:
-                    continue
+            if entity_id is not None and var.entity_id is not None and var.entity_id != entity_id:
+                continue
             return var
 
     return None

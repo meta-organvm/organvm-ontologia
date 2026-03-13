@@ -12,11 +12,9 @@ from typing import Any
 
 from ontologia.variables.inheritance import find_in_chain
 from ontologia.variables.variable import (
-    Constraint,
     Mutability,
     Scope,
     Variable,
-    VariableType,
 )
 
 

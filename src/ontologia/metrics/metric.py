@@ -12,7 +12,6 @@ Six metric types model different measurement patterns:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
 from enum import Enum
 from typing import Any
 

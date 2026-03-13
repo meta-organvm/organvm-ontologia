@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from ontologia.entity.identity import EntityIdentity, LifecycleStatus
+from ontologia.entity.identity import EntityIdentity
 from ontologia.entity.naming import NameIndex, NameRecord
 from ontologia.structure.edges import EdgeIndex, HierarchyEdge, RelationEdge
 

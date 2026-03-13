@@ -8,7 +8,6 @@ structure version records.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 from ontologia.entity.identity import EntityIdentity, EntityType, LifecycleStatus, create_entity
 from ontologia.entity.lineage import LineageIndex, LineageRecord, LineageType
@@ -191,7 +190,7 @@ def merge(
             ctx.edge_index.retire_hierarchy(parent_edge.parent_id, sid, at=now)
 
     # Give successor the parent of the first source (if any)
-    first_parent = ctx.edge_index.parent(source_ids[0], at=now)
+    ctx.edge_index.parent(source_ids[0], at=now)
     # Check historical parent since we just retired
     for edge in ctx.edge_index._parent_of.get(source_ids[0], []):
         if edge.valid_to == now:  # just retired

@@ -7,7 +7,6 @@ This preserves the complete structural history for temporal queries.
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -48,9 +47,7 @@ class HierarchyEdge:
         check = at or _now_iso()
         if self.valid_from > check:
             return False
-        if self.valid_to is not None and self.valid_to <= check:
-            return False
-        return True
+        return not (self.valid_to is not None and self.valid_to <= check)
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {
@@ -94,9 +91,7 @@ class RelationEdge:
         check = at or _now_iso()
         if self.valid_from > check:
             return False
-        if self.valid_to is not None and self.valid_to <= check:
-            return False
-        return True
+        return not (self.valid_to is not None and self.valid_to <= check)
 
     def to_dict(self) -> dict[str, Any]:
         d: dict[str, Any] = {

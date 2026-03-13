@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from ontologia.sensing.interfaces import ChangeType, NormalizedChange, RawSignal
 
-
 # Mapping from signal types to change types
 _SIGNAL_TYPE_MAP: dict[str, ChangeType] = {
     "file_modified": ChangeType.STATE,

@@ -9,7 +9,6 @@ seamless — existing code can pass a repo name and get back the entity.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
 
 from ontologia.entity.identity import EntityIdentity, EntityType
 from ontologia.entity.naming import NameIndex, NameRecord

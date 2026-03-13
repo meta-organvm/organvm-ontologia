@@ -141,6 +141,4 @@ def has_drift(a: StateSnapshot, b: StateSnapshot) -> bool:
         return True
     if a.metric_values != b.metric_values:
         return True
-    if a.variable_bindings != b.variable_bindings:
-        return True
-    return False
+    return a.variable_bindings != b.variable_bindings

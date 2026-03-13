@@ -62,7 +62,6 @@ def detect_naming_conflicts(
 ) -> list[TensionIndicator]:
     """Find cases where multiple active entities share the same slug."""
     tensions: list[TensionIndicator] = []
-    slug_to_entities: dict[str, list[str]] = {}
 
     for slug, entity_ids in name_index._by_slug.items():
         # Count only entities with currently active names for this slug

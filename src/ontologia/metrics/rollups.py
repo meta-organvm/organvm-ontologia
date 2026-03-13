@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from ontologia.metrics.metric import AggregationPolicy, MetricDefinition
-from ontologia.metrics.observations import Observation, ObservationStore
+from ontologia.metrics.observations import ObservationStore
 from ontologia.structure.edges import EdgeIndex
 
 

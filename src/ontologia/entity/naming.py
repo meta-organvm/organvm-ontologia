@@ -63,9 +63,7 @@ class NameRecord:
         check_time = at or _now_iso()
         if self.valid_from > check_time:
             return False
-        if self.valid_to is not None and self.valid_to <= check_time:
-            return False
-        return True
+        return not (self.valid_to is not None and self.valid_to <= check_time)
 
     def to_dict(self) -> dict[str, Any]:
         return {
