@@ -21,6 +21,7 @@ from ontologia.entity.identity import (
 from ontologia.entity.naming import NameIndex, NameRecord, add_name
 from ontologia.entity.resolver import EntityResolver
 from ontologia.events import bus
+from ontologia.structure.edges import EdgeIndex, HierarchyEdge, RelationEdge, _now_iso
 
 
 def _default_store_dir() -> Path:
@@ -29,17 +30,19 @@ def _default_store_dir() -> Path:
 
 @dataclass
 class RegistryStore:
-    """Unified store for entities, names, and events.
+    """Unified store for entities, names, edges, and events.
 
     File layout in store_dir:
     - entities.json   — current entity state {uid: entity_dict}
     - names.jsonl     — append-only name history
+    - edges.jsonl     — append-only edge log (hierarchy + relation)
     - events.jsonl    — append-only event log (managed by events.bus)
     """
 
     store_dir: Path
     _entities: dict[str, EntityIdentity] = field(default_factory=dict)
     _name_index: NameIndex = field(default_factory=NameIndex)
+    _edge_index: EdgeIndex = field(default_factory=EdgeIndex)
     _dirty: bool = False
 
     # ------------------------------------------------------------------
@@ -53,6 +56,10 @@ class RegistryStore:
     @property
     def names_path(self) -> Path:
         return self.store_dir / "names.jsonl"
+
+    @property
+    def edges_path(self) -> Path:
+        return self.store_dir / "edges.jsonl"
 
     @property
     def events_path(self) -> Path:
@@ -83,6 +90,23 @@ class RegistryStore:
                 try:
                     record = NameRecord.from_dict(json.loads(line))
                     self._name_index.add(record)
+                except (json.JSONDecodeError, KeyError):
+                    continue
+
+        # Load edges
+        self._edge_index = EdgeIndex()
+        if self.edges_path.is_file():
+            for line in self.edges_path.read_text().splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    data = json.loads(line)
+                    edge_type = data.get("edge_type", "")
+                    if edge_type == "hierarchy":
+                        self._edge_index.add_hierarchy(HierarchyEdge.from_dict(data))
+                    elif edge_type == "relation":
+                        self._edge_index.add_relation(RelationEdge.from_dict(data))
                 except (json.JSONDecodeError, KeyError):
                     continue
 
@@ -326,6 +350,76 @@ class RegistryStore:
             limit=limit,
             path=self.events_path,
         )
+
+    # ------------------------------------------------------------------
+    # Edge operations
+    # ------------------------------------------------------------------
+
+    @property
+    def edge_index(self) -> EdgeIndex:
+        """The in-memory edge index (hierarchy + relation edges)."""
+        return self._edge_index
+
+    def add_hierarchy_edge(
+        self,
+        parent_id: str,
+        child_id: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> HierarchyEdge:
+        """Create and persist a hierarchy edge (parent→child)."""
+        edge = HierarchyEdge(
+            parent_id=parent_id,
+            child_id=child_id,
+            valid_from=_now_iso(),
+            metadata=metadata or {},
+        )
+        self._edge_index.add_hierarchy(edge)
+        self._append_edge(edge, "hierarchy")
+        return edge
+
+    def add_relation_edge(
+        self,
+        source_id: str,
+        target_id: str,
+        relation_type: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> RelationEdge:
+        """Create and persist a relation edge (source→target)."""
+        edge = RelationEdge(
+            source_id=source_id,
+            target_id=target_id,
+            relation_type=relation_type,
+            valid_from=_now_iso(),
+            metadata=metadata or {},
+        )
+        self._edge_index.add_relation(edge)
+        self._append_edge(edge, "relation")
+        return edge
+
+    def save_edges(self) -> None:
+        """Rewrite the full edges JSONL from the in-memory EdgeIndex.
+
+        Recovery/migration tool — analogous to save_names().
+        """
+        self.store_dir.mkdir(parents=True, exist_ok=True)
+        lines: list[str] = []
+        for edge in self._edge_index.all_hierarchy_edges():
+            d = edge.to_dict()
+            d["edge_type"] = "hierarchy"
+            lines.append(json.dumps(d, separators=(",", ":")))
+        for edge in self._edge_index.all_relation_edges():
+            d = edge.to_dict()
+            d["edge_type"] = "relation"
+            lines.append(json.dumps(d, separators=(",", ":")))
+        self.edges_path.write_text("\n".join(lines) + "\n" if lines else "")
+
+    def _append_edge(self, edge: HierarchyEdge | RelationEdge, edge_type: str) -> None:
+        """Append a single edge record to the JSONL file."""
+        self.store_dir.mkdir(parents=True, exist_ok=True)
+        d = edge.to_dict()
+        d["edge_type"] = edge_type
+        with self.edges_path.open("a") as f:
+            f.write(json.dumps(d, separators=(",", ":")) + "\n")
 
     # ------------------------------------------------------------------
     # Internal helpers

@@ -25,6 +25,7 @@ class BootstrapResult:
     repos_created: int = 0
     organs_skipped: int = 0
     repos_skipped: int = 0
+    hierarchy_edges_created: int = 0
     errors: list[str] = field(default_factory=list)
 
     @property
@@ -41,6 +42,7 @@ class BootstrapResult:
             "repos_created": self.repos_created,
             "organs_skipped": self.organs_skipped,
             "repos_skipped": self.repos_skipped,
+            "hierarchy_edges_created": self.hierarchy_edges_created,
             "total_created": self.total_created,
             "total_skipped": self.total_skipped,
             "errors": self.errors,
@@ -153,6 +155,9 @@ def bootstrap_from_registry(
             except Exception as exc:
                 result.errors.append(f"Failed to create repo {tag}: {exc}")
 
+    # Create hierarchy edges (organ→repo)
+    _bootstrap_hierarchy_edges(store, result)
+
     # Persist entities
     store.save()
 
@@ -164,3 +169,45 @@ def bootstrap_from_registry(
     )
 
     return result
+
+
+def _bootstrap_hierarchy_edges(
+    store: RegistryStore,
+    result: BootstrapResult,
+) -> None:
+    """Create hierarchy edges from organ→repo relationships.
+
+    Builds organ_key→UID mapping, then creates an edge for each repo
+    whose organ_key maps to an existing organ entity. Skips edges
+    that already exist (idempotent).
+    """
+    # Build organ_key → organ UID mapping
+    organ_uids: dict[str, str] = {}
+    for entity in store.list_entities(entity_type=EntityType.ORGAN):
+        rk = entity.metadata.get("registry_key", "")
+        if rk:
+            organ_uids[rk] = entity.uid
+
+    if not organ_uids:
+        return
+
+    # Build set of existing hierarchy edges for dedup
+    existing_edges: set[tuple[str, str]] = set()
+    for edge in store.edge_index.all_hierarchy_edges():
+        if edge.is_active():
+            existing_edges.add((edge.parent_id, edge.child_id))
+
+    # Create organ→repo edges
+    for entity in store.list_entities(entity_type=EntityType.REPO):
+        organ_key = entity.metadata.get("organ_key", "")
+        parent_uid = organ_uids.get(organ_key)
+        if not parent_uid:
+            continue
+        if (parent_uid, entity.uid) in existing_edges:
+            continue
+        store.add_hierarchy_edge(
+            parent_id=parent_uid,
+            child_id=entity.uid,
+            metadata={"source": "bootstrap", "organ_key": organ_key},
+        )
+        result.hierarchy_edges_created += 1
