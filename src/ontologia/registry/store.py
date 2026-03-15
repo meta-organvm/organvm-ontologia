@@ -18,10 +18,15 @@ from ontologia.entity.identity import (
     LifecycleStatus,
     create_entity,
 )
+from ontologia.entity.lineage import LineageIndex, LineageRecord, LineageType
 from ontologia.entity.naming import NameIndex, NameRecord, add_name
 from ontologia.entity.resolver import EntityResolver
 from ontologia.events import bus
+from ontologia.metrics.metric import MetricDefinition
+from ontologia.metrics.observations import Observation, ObservationStore
 from ontologia.structure.edges import EdgeIndex, HierarchyEdge, RelationEdge, _now_iso
+from ontologia.variables.resolution import VariableStore
+from ontologia.variables.variable import Scope, Variable
 
 
 def _default_store_dir() -> Path:
@@ -43,6 +48,10 @@ class RegistryStore:
     _entities: dict[str, EntityIdentity] = field(default_factory=dict)
     _name_index: NameIndex = field(default_factory=NameIndex)
     _edge_index: EdgeIndex = field(default_factory=EdgeIndex)
+    _lineage_index: LineageIndex = field(default_factory=LineageIndex)
+    _variable_store: VariableStore = field(default_factory=VariableStore)
+    _observation_store: ObservationStore | None = field(default=None)
+    _metrics: dict[str, MetricDefinition] = field(default_factory=dict)
     _dirty: bool = False
 
     # ------------------------------------------------------------------
@@ -64,6 +73,22 @@ class RegistryStore:
     @property
     def events_path(self) -> Path:
         return self.store_dir / "events.jsonl"
+
+    @property
+    def lineage_path(self) -> Path:
+        return self.store_dir / "lineage.jsonl"
+
+    @property
+    def variables_path(self) -> Path:
+        return self.store_dir / "variables.json"
+
+    @property
+    def observations_path(self) -> Path:
+        return self.store_dir / "observations.jsonl"
+
+    @property
+    def metrics_path(self) -> Path:
+        return self.store_dir / "metrics.json"
 
     # ------------------------------------------------------------------
     # Load / Save
@@ -110,13 +135,51 @@ class RegistryStore:
                 except (json.JSONDecodeError, KeyError):
                     continue
 
+        # Load lineage
+        self._lineage_index = LineageIndex()
+        if self.lineage_path.is_file():
+            for line in self.lineage_path.read_text().splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    self._lineage_index.add(LineageRecord.from_dict(json.loads(line)))
+                except (json.JSONDecodeError, KeyError, ValueError):
+                    continue
+
+        # Load variables
+        self._variable_store = VariableStore()
+        if self.variables_path.is_file():
+            try:
+                data = json.loads(self.variables_path.read_text())
+                self._variable_store = VariableStore.from_list(data)
+            except (json.JSONDecodeError, KeyError):
+                pass
+
+        # Load metrics definitions
+        self._metrics = {}
+        if self.metrics_path.is_file():
+            try:
+                data = json.loads(self.metrics_path.read_text())
+                for mid, mdict in data.items():
+                    self._metrics[mid] = MetricDefinition.from_dict(mdict)
+            except (json.JSONDecodeError, KeyError):
+                pass
+
+        # Load observation store
+        self._observation_store = ObservationStore(self.observations_path)
+        self._observation_store.load()
+
         # Point the event bus at our events file
         bus.set_events_path(self.events_path)
 
         self._dirty = False
 
     def save(self) -> None:
-        """Persist entities to JSON. Names are always appended inline."""
+        """Persist entities, variables, and metrics to JSON.
+
+        Names, edges, lineage, and observations are always appended inline.
+        """
         self.store_dir.mkdir(parents=True, exist_ok=True)
 
         # Write entities
@@ -124,6 +187,19 @@ class RegistryStore:
         self.entities_path.write_text(
             json.dumps(data, indent=2, sort_keys=True) + "\n",
         )
+
+        # Write variables
+        var_data = self._variable_store.to_list()
+        self.variables_path.write_text(
+            json.dumps(var_data, indent=2) + "\n",
+        )
+
+        # Write metrics definitions
+        met_data = {mid: m.to_dict() for mid, m in self._metrics.items()}
+        self.metrics_path.write_text(
+            json.dumps(met_data, indent=2, sort_keys=True) + "\n",
+        )
+
         self._dirty = False
 
     def save_names(self) -> None:
@@ -420,6 +496,118 @@ class RegistryStore:
         d["edge_type"] = edge_type
         with self.edges_path.open("a") as f:
             f.write(json.dumps(d, separators=(",", ":")) + "\n")
+
+    # ------------------------------------------------------------------
+    # Variable operations
+    # ------------------------------------------------------------------
+
+    @property
+    def variable_store(self) -> VariableStore:
+        return self._variable_store
+
+    def set_variable(self, var: Variable) -> tuple[bool, str]:
+        """Set a variable in the store. Returns (success, error_message)."""
+        ok, msg = self._variable_store.set(var)
+        if ok:
+            self._dirty = True
+            bus.emit(
+                "variable.set",
+                source="system",
+                subject_entity=var.entity_id or "",
+                changed_property=var.key,
+                new_value=str(var.value),
+                payload={"scope": var.scope.value, "mutability": var.mutability.value},
+            )
+        return ok, msg
+
+    def resolve_variable(
+        self,
+        key: str,
+        scope: Scope = Scope.GLOBAL,
+        entity_chain: list[str | None] | None = None,
+        default: Any = None,
+    ) -> Any:
+        """Resolve a variable through the inheritance chain. Returns the value."""
+        from ontologia.variables.resolution import ResolvedVariable
+
+        result = self._variable_store.resolve(key, scope, entity_chain, default)
+        return result.value
+
+    # ------------------------------------------------------------------
+    # Lineage operations
+    # ------------------------------------------------------------------
+
+    @property
+    def lineage_index(self) -> LineageIndex:
+        return self._lineage_index
+
+    def add_lineage(
+        self,
+        entity_id: str,
+        related_id: str,
+        lineage_type: LineageType,
+        metadata: dict[str, Any] | None = None,
+    ) -> LineageRecord:
+        """Record a lineage relationship and persist to JSONL."""
+        record = LineageRecord(
+            entity_id=entity_id,
+            related_id=related_id,
+            lineage_type=lineage_type,
+            metadata=metadata or {},
+        )
+        self._lineage_index.add(record)
+        self._append_lineage(record)
+
+        bus.emit(
+            "lineage.recorded",
+            source="system",
+            subject_entity=entity_id,
+            payload={
+                "related_id": related_id,
+                "lineage_type": lineage_type.value,
+            },
+        )
+        return record
+
+    def _append_lineage(self, record: LineageRecord) -> None:
+        """Append a single lineage record to JSONL."""
+        self.store_dir.mkdir(parents=True, exist_ok=True)
+        with self.lineage_path.open("a") as f:
+            f.write(json.dumps(record.to_dict(), separators=(",", ":")) + "\n")
+
+    # ------------------------------------------------------------------
+    # Metric + Observation operations
+    # ------------------------------------------------------------------
+
+    @property
+    def observation_store(self) -> ObservationStore:
+        if self._observation_store is None:
+            self._observation_store = ObservationStore(self.observations_path)
+            self._observation_store.load()
+        return self._observation_store
+
+    def register_metric(self, metric: MetricDefinition) -> None:
+        """Register a metric definition."""
+        self._metrics[metric.metric_id] = metric
+        self._dirty = True
+
+    def get_metric(self, metric_id: str) -> MetricDefinition | None:
+        """Look up a metric definition."""
+        return self._metrics.get(metric_id)
+
+    def list_metrics(self) -> list[MetricDefinition]:
+        """List all registered metric definitions."""
+        return list(self._metrics.values())
+
+    def record_observation(
+        self,
+        metric_id: str,
+        entity_id: str,
+        value: float,
+        source: str = "system",
+    ) -> Observation:
+        """Record a metric observation (persisted immediately to JSONL)."""
+        return self.observation_store.observe(metric_id, entity_id, value, source)
 
     # ------------------------------------------------------------------
     # Internal helpers
