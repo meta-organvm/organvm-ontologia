@@ -16,15 +16,29 @@ from ontologia._ulid import generate_ulid
 
 
 class EntityType(str, Enum):
-    """Known entity types in the system."""
+    """Known entity types in the system.
 
-    ORGAN = "organ"
-    REPO = "repo"
-    MODULE = "module"
-    DOCUMENT = "document"
-    SESSION = "session"
-    VARIABLE = "variable"
-    METRIC = "metric"
+    Each leaf type derives from a SPEC-000 primitive through the SPEC-001
+    stratified taxonomy (ONT-001 through ONT-028). The derivation chain
+    is: SPEC-000 Primitive -> SPEC-001 Category Path -> Leaf EntityType.
+
+    See: specs/SPEC-001-ENTITY-MAPPING.md for the full derivation table.
+    """
+
+    # Independent Continuants — SPEC-000 primitive: Entity
+    ORGAN = "organ"       # ONT-004: Entity > Continuant > IndependentContinuant
+    REPO = "repo"         # ONT-005: Entity > Continuant > IndependentContinuant
+    MODULE = "module"     # ONT-006: Entity > Continuant > IndependentContinuant
+
+    # Generically Dependent Continuant — SPEC-000 primitive: Entity
+    DOCUMENT = "document"  # ONT-011: Entity > Continuant > GenericallyDependentContinuant
+
+    # Occurrent Process — SPEC-000 primitive: Event
+    SESSION = "session"   # ONT-015: Entity > Occurrent > Process
+
+    # Specifically Dependent Continuants — SPEC-000 primitive: Value
+    VARIABLE = "variable"  # ONT-008: Entity > Continuant > SpecificallyDependentContinuant
+    METRIC = "metric"      # ONT-009: Entity > Continuant > SpecificallyDependentContinuant
 
 
 class LifecycleStatus(str, Enum):
