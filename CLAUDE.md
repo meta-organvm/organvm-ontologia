@@ -56,7 +56,16 @@ All data at `~/.organvm/ontologia/`:
 ### Governance
 - *Standard ORGANVM governance applies*
 
-*Last synced: 2026-04-04T21:14:35Z*
+*Last synced: 2026-04-14T21:20:47Z*
+
+## Active Handoff Protocol
+
+If `.conductor/active-handoff.md` exists, **READ IT FIRST** before doing any work.
+It contains constraints, locked files, conventions, and completed work from the
+originating agent. You MUST honor all constraints listed there.
+
+If the handoff says "CROSS-VERIFICATION REQUIRED", your self-assessment will
+NOT be trusted. A different agent will verify your output against these constraints.
 
 ## Session Review Protocol
 
@@ -74,7 +83,7 @@ Transcripts are on-demand (never committed):
 
 ## System Library
 
-Plans: 269 indexed | Chains: 5 available | SOPs: 99 active
+Plans: 269 indexed | Chains: 5 available | SOPs: 121 active
 Discover: `organvm plans search <query>` | `organvm chains list` | `organvm sop lifecycle`
 Library: `meta-organvm/praxis-perpetua/library/`
 
@@ -153,11 +162,42 @@ Linked skills: cicd-resilience-and-recovery, continuous-learning-agent, cross-ag
 **Prompting (Anthropic)**: context 200K tokens, format: XML tags, thinking: extended thinking (budget_tokens)
 
 
+## Entity Identity (Ontologia)
+
+**UID:** `ent_repo_01KKKX3RVRCDA21V4KAJZKJV47` | **Matched by:** primary_name
+
+Resolve: `organvm ontologia resolve organvm-ontologia` | History: `organvm ontologia history ent_repo_01KKKX3RVRCDA21V4KAJZKJV47`
+
+
+## Live System Variables (Ontologia)
+
+| Variable | Value | Scope | Updated |
+|----------|-------|-------|---------|
+| `active_repos` | 89 | global | 2026-04-14 |
+| `archived_repos` | 54 | global | 2026-04-14 |
+| `ci_workflows` | 107 | global | 2026-04-14 |
+| `code_files` | 0 | global | 2026-04-14 |
+| `dependency_edges` | 60 | global | 2026-04-14 |
+| `operational_organs` | 10 | global | 2026-04-14 |
+| `published_essays` | 29 | global | 2026-04-14 |
+| `repos_with_tests` | 0 | global | 2026-04-14 |
+| `sprints_completed` | 33 | global | 2026-04-14 |
+| `test_files` | 0 | global | 2026-04-14 |
+| `total_organs` | 10 | global | 2026-04-14 |
+| `total_repos` | 145 | global | 2026-04-14 |
+| `total_words_formatted` | 0 | global | 2026-04-14 |
+| `total_words_numeric` | 0 | global | 2026-04-14 |
+| `total_words_short` | 0K+ | global | 2026-04-14 |
+
+Metrics: 9 registered | Observations: 32112 recorded
+Resolve: `organvm ontologia status` | Refresh: `organvm refresh`
+
+
 ## System Density (auto-generated)
 
-AMMOI: 56% | Edges: 41 | Tensions: 0 | Clusters: 0 | Adv: 13 | Events(24h): 28087
-Structure: 8 organs / 128 repos / 1654 components (depth 17) | Inference: 0% | Organs: META-ORGANVM:64%, ORGAN-I:55%, ORGAN-II:47%, ORGAN-III:55% +4 more
-Last pulse: 2026-04-04T21:14:26 | Δ24h: -0.1% | Δ7d: n/a
+AMMOI: 58% | Edges: 42 | Tensions: 33 | Clusters: 5 | Adv: 23 | Events(24h): 32325
+Structure: 8 organs / 145 repos / 1654 components (depth 17) | Inference: 98% | Organs: META-ORGANVM:65%, ORGAN-I:53%, ORGAN-II:48%, ORGAN-III:54% +5 more
+Last pulse: 2026-04-14T21:20:06 | Δ24h: -1.0% | Δ7d: n/a
 
 
 ## Dialect Identity (Trivium)
@@ -189,12 +229,3 @@ Nature demands a documentation counterpart. This formation maintains its narrati
 *Compliance: Implementation exists without record.*
 
 <!-- ORGANVM:AUTO:END -->
-
-## Active Handoff Protocol
-
-If `.conductor/active-handoff.md` exists, **READ IT FIRST** before doing any work.
-It contains constraints, locked files, conventions, and completed work from the
-originating agent. You MUST honor all constraints listed there.
-
-If the handoff says "CROSS-VERIFICATION REQUIRED", your self-assessment will
-NOT be trusted. A different agent will verify your output against these constraints.
