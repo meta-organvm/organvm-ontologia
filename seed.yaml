@@ -30,6 +30,14 @@ produces:
     description: "Append-only event bus with entity-scoped mutation tracking"
     consumers: [META-ORGANVM]
 
+implements:
+  - concept: ontology_charter
+    zettel_source: "post-flood/specs/SPEC-001/grounding.md"
+    aspect: "entity/ — ULID-based EntityIdentity, NameRecord temporal aliases, entity Resolver"
+  - concept: entity_primitives
+    zettel_source: "post-flood/specs/SPEC-002/grounding.md"
+    aspect: "entity/ + registry/ — primitive entity types, identity storage, append-only event tracking"
+
 consumes:
   - type: registry
     source: META-ORGANVM
