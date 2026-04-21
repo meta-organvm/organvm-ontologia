@@ -1,0 +1,176 @@
+# routing-law.yaml — Universal Routing Law for ORGANVM
+#
+# Defines property dimensions and ordered routing rules.
+# First-match wins. Security rules take absolute precedence.
+# Consumed by resolve.py (stdlib-only YAML parser).
+
+schema_version: "1.0"
+
+dimensions:
+  function:
+    - sort
+    - guard
+    - store
+    - build
+    - serve
+    - validate
+    - transform
+    - govern
+    - classify
+  material:
+    - file
+    - email
+    - repo
+    - config
+    - credential
+    - document
+    - daemon
+    - prompt
+    - atom
+  pattern:
+    - daemon
+    - cli
+    - api
+    - library
+    - config-file
+    - data-store
+    - pipeline
+    - hook
+  scope:
+    - personal
+    - organ
+    - system
+    - public
+  security:
+    - public
+    - private
+    - secret
+    - sovereign
+
+rules:
+  - id: 1
+    match:
+      security: sovereign
+    target: custodia-securitatis
+    note: immune system — sovereign material is never exposed
+
+  - id: 2
+    match:
+      security: secret
+    target: custodia-securitatis
+    note: secret-class credentials and keys
+
+  - id: 3
+    match:
+      scope: personal
+      pattern: daemon
+    target: domus-semper-palingenesis
+    note: personal daemons live in domus
+
+  - id: 4
+    match:
+      scope: personal
+      pattern: config-file
+    target: domus-semper-palingenesis/dot_config/
+    note: personal config files deploy via chezmoi
+
+  - id: 5
+    match:
+      scope: personal
+      material: credential
+    target: domus-semper-palingenesis
+    note: credentials via 1Password op read
+
+  - id: 6
+    match:
+      scope: system
+      function: govern
+    target: organvm-engine
+    note: system governance rules and promotion logic
+
+  - id: 7
+    match:
+      scope: system
+      function: validate
+    target: schema-definitions
+    note: system-level validation schemas
+
+  - id: 8
+    match:
+      scope: system
+      function: classify
+    target: organvm-ontologia
+    note: classification belongs in the ontology
+
+  - id: 9
+    match:
+      function: transform
+    target: alchemia-ingestvm
+    note: all transformations route through the alchemical pipeline
+
+  - id: 10
+    match:
+      material: prompt
+      function: store
+    target: organvm-corpvs-testamentvm/data/prompt-registry/
+    note: prompt storage in the corpus
+
+  - id: 11
+    match:
+      material: atom
+    target: organvm-corpvs-testamentvm/data/prompt-registry/
+    note: atoms are prompt-registry material
+
+  - id: 12
+    match:
+      material: email
+      function: sort
+    target: domus-semper-palingenesis
+    note: mail-triage lives in domus
+
+  - id: 13
+    match:
+      material: document
+      scope: system
+    target: organvm-corpvs-testamentvm
+    note: system documents belong in the corpus
+
+  - id: 14
+    match:
+      scope: organ
+      pattern: api
+    target: organ's ergon repo
+    note: organ-scoped APIs live in that organ's ergon
+
+  - id: 15
+    match:
+      scope: organ
+      pattern: cli
+    target: organ's taxis repo
+    note: organ-scoped CLIs live in that organ's taxis
+
+  - id: 16
+    match:
+      scope: public
+      material: document
+    target: organvm-v-logos
+    note: public documents route to the discourse organ
+
+  - id: 17
+    match:
+      scope: public
+      pattern: api
+    target: organvm-iii-ergon
+    note: public APIs route to the commercial organ
+
+  - id: 18
+    match:
+      material: repo
+      function: classify
+    target: organvm-engine
+    note: repo classification is registry work
+
+  - id: 19
+    match: {}
+    target: ~/Workspace/intake/
+    note: unsorted catch-all — nothing rests here permanently
